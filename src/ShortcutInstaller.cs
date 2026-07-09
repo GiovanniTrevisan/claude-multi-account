@@ -22,6 +22,46 @@ namespace ClaudeMultiAccount
             CreateShortcut(config.DesktopShortcutPath, config);
         }
 
+        /// <summary>
+        /// Removes everything <see cref="InstallAll"/> created: both shortcuts and
+        /// the AppUserModelID registry entry. Called by the uninstaller before the
+        /// executable itself is deleted. Deliberately leaves the isolated Claude
+        /// profile (login/cookies/cache) alone — that is user data, not app state.
+        /// </summary>
+        public static void UninstallAll(AppConfig config)
+        {
+            DeleteShortcut(config.StartMenuShortcutPath);
+            DeleteShortcut(config.DesktopShortcutPath);
+            UnregisterAppUserModelId(config);
+        }
+
+        private static void DeleteShortcut(string shortcutPath)
+        {
+            try
+            {
+                if (File.Exists(shortcutPath))
+                    File.Delete(shortcutPath);
+            }
+            catch
+            {
+                // Best-effort cleanup; a leftover shortcut is harmless.
+            }
+        }
+
+        private static void UnregisterAppUserModelId(AppConfig config)
+        {
+            try
+            {
+                Registry.CurrentUser.DeleteSubKeyTree(
+                    @"Software\Classes\AppUserModelId\" + config.AppUserModelId,
+                    throwOnMissingSubKey: false);
+            }
+            catch
+            {
+                // Best-effort cleanup.
+            }
+        }
+
         public static void RegisterAppUserModelId(AppConfig config)
         {
             try

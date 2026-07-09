@@ -74,7 +74,15 @@ separado — o carimbo é reaplicado a cada nova janela automaticamente.
   Windows (`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`) — sem SDK
   externo necessário
 
-## Build
+## Instalação
+
+Baixe o instalador mais recente (`ClaudeMultiAccount-Setup.exe`) na
+[página de Releases](https://github.com/GiovanniTrevisan/claude-multi-account/releases)
+e execute. Ele instala por usuário (sem precisar de admin), cria os atalhos
+automaticamente e registra um desinstalador de verdade em Configurações do
+Windows → Aplicativos.
+
+## Build a partir do código-fonte
 
 ```powershell
 git clone https://github.com/GiovanniTrevisan/claude-multi-account.git
@@ -85,12 +93,28 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
 `-Install` já cria os atalhos (Menu Iniciar + Área de Trabalho) com o ícone
 customizado. Sem essa flag, o build só gera `dist\Claude Work.exe`.
 
+Para gerar o instalador (precisa do [Inno Setup](https://jrsoftware.org/isinfo.php)):
+
+```powershell
+.\build.ps1
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=1.0.0 installer\ClaudeWork.iss
+```
+
+Ao dar push numa tag `v*` (ex.: `v1.0.0`), o workflow
+[`.github/workflows/release.yml`](.github/workflows/release.yml) builda o
+instalador e o anexa automaticamente a um novo GitHub Release.
+
 ## Uso
 
 Clique no atalho "Claude Work" criado (ou rode `dist\"Claude Work.exe"`
 diretamente). Ele fica residente em segundo plano cuidando da identidade da
 janela; feche o Claude Work normalmente e o processo do launcher encerra
 sozinho.
+
+Para desinstalar: use Configurações do Windows → Aplicativos se você usou o
+instalador, ou rode `Claude Work.exe --uninstall` para remover os atalhos e a
+entrada de registro manualmente (seu perfil isolado do Claude — login,
+cookies, cache — é preservado de qualquer forma).
 
 ### Configuração
 
@@ -124,6 +148,9 @@ src/
   NativeMessageBox.cs           wrapper pequeno de MessageBox
   Interop/                      declarações P/Invoke, interfaces COM, PROPVARIANT
                                  — isolado do resto do código
+installer/
+  ClaudeWork.iss                 script do Inno Setup (instalação por usuário + desinstalador)
+.github/workflows/release.yml    builda e publica o instalador a cada tag `v*`
 ```
 
 ## Limitações conhecidas

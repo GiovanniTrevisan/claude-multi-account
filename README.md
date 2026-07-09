@@ -73,7 +73,15 @@ grouping separate — the stamp is reapplied to each new window automatically.
   (`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`) — no external SDK
   needed
 
-## Build
+## Install
+
+Download the latest installer (`ClaudeMultiAccount-Setup.exe`) from the
+[Releases page](https://github.com/GiovanniTrevisan/claude-multi-account/releases)
+and run it. It installs per-user (no admin rights needed), creates the
+shortcuts automatically, and registers a proper uninstaller under Windows
+Settings → Apps.
+
+## Build from source
 
 ```powershell
 git clone https://github.com/GiovanniTrevisan/claude-multi-account.git
@@ -84,12 +92,28 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1 -Install
 `-Install` also creates the shortcuts (Start Menu + Desktop) with the custom
 icon. Without that flag, the build just produces `dist\Claude Work.exe`.
 
+To build the installer itself (requires [Inno Setup](https://jrsoftware.org/isinfo.php)):
+
+```powershell
+.\build.ps1
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=1.0.0 installer\ClaudeWork.iss
+```
+
+Pushing a `v*` tag (e.g. `v1.0.0`) triggers
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which builds
+the installer and attaches it to a new GitHub Release automatically.
+
 ## Usage
 
 Click the "Claude Work" shortcut that was created (or run
 `dist\"Claude Work.exe"` directly). It stays resident in the background taking
 care of the window's identity; close Claude Work normally and the launcher
 process exits on its own.
+
+To uninstall: use Windows Settings → Apps if you used the installer, or run
+`Claude Work.exe --uninstall` to remove the shortcuts and registry entry
+manually (your isolated Claude profile — login, cookies, cache — is left
+untouched either way).
 
 ### Configuration
 
@@ -123,6 +147,9 @@ src/
   NativeMessageBox.cs           tiny MessageBox wrapper
   Interop/                      P/Invoke declarations, COM interfaces, PROPVARIANT
                                  handling — isolated from the rest of the code
+installer/
+  ClaudeWork.iss                 Inno Setup script (per-user install + uninstaller)
+.github/workflows/release.yml    builds and publishes the installer on a `v*` tag
 ```
 
 ## Known limitations

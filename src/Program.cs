@@ -10,11 +10,21 @@ namespace ClaudeMultiAccount
     internal static class Program
     {
         private const string InstallShortcutsArgument = "--install-shortcuts";
+        private const string UninstallArgument = "--uninstall";
 
         [STAThread]
         private static int Main(string[] args)
         {
             var config = AppConfig.FromEnvironment();
+
+            // Run before EnsureProfileDirectoriesExist: uninstalling should not
+            // recreate the profile directory it might have just been asked to leave alone.
+            if (Array.IndexOf(args, UninstallArgument) >= 0)
+            {
+                ShortcutInstaller.UninstallAll(config);
+                return 0;
+            }
+
             EnsureProfileDirectoriesExist(config);
 
             if (Array.IndexOf(args, InstallShortcutsArgument) >= 0)
