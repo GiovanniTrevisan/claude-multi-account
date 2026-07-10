@@ -87,6 +87,7 @@ namespace ClaudeMultiAccount
             {
                 shellLink = (IShellLinkW)new ShellLinkCoClass();
                 shellLink.SetPath(config.ExecutablePath);
+                shellLink.SetArguments(config.LaunchArguments);
                 shellLink.SetWorkingDirectory(config.InstallDirectory);
                 shellLink.SetDescription(config.ProductName);
                 if (File.Exists(config.IconPath))

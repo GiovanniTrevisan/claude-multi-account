@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using ClaudeMultiAccount.Interop;
 
 namespace ClaudeMultiAccount
@@ -12,15 +11,12 @@ namespace ClaudeMultiAccount
     }
 
     /// <summary>
-    /// Finds Claude Desktop's visible top-level windows. Every Claude main window
-    /// is titled exactly "Claude" regardless of which profile owns it, so windows
-    /// must be further filtered by owning process (see <see cref="ClaudeProcessInspector"/>).
+    /// Finds visible, non-owned, non-tool-window top-level windows. Every Claude main window
+    /// is a top-level application window, regardless of which profile owns it. Windows are
+    /// further filtered by owning process (see <see cref="ClaudeProcessInspector"/>).
     /// </summary>
     internal static class ClaudeWindowFinder
     {
-        private const string ClaudeWindowTitle = "Claude";
-        private const int MaxTitleLength = 512;
-
         public static List<ClaudeWindow> FindVisibleWindows()
         {
             var windows = new List<ClaudeWindow>();
@@ -29,9 +25,10 @@ namespace ClaudeMultiAccount
                 if (!NativeMethods.IsWindowVisible(handle))
                     return true;
 
-                var title = new StringBuilder(MaxTitleLength);
-                NativeMethods.GetWindowText(handle, title, title.Capacity);
-                if (title.ToString() != ClaudeWindowTitle)
+                if (NativeMethods.GetWindow(handle, NativeMethods.GW_OWNER) != IntPtr.Zero)
+                    return true;
+
+                if ((NativeMethods.GetWindowLongPtr(handle, NativeMethods.GWL_EXSTYLE).ToInt64() & NativeMethods.WS_EX_TOOLWINDOW) != 0)
                     return true;
 
                 uint processId;

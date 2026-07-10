@@ -22,6 +22,10 @@ namespace ClaudeMultiAccount.Interop
 
         public const ushort VT_LPWSTR = 31;
 
+        public const uint GW_OWNER = 4;
+        public const int GWL_EXSTYLE = -20;
+        public const long WS_EX_TOOLWINDOW = 0x00000080;
+
         public static readonly Guid IID_IPropertyStore = new Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99");
 
         [DllImport("user32.dll")]
@@ -47,6 +51,12 @@ namespace ClaudeMultiAccount.Interop
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         public static extern IntPtr LoadImage(IntPtr moduleHandle, string name, uint type, int width, int height, uint flags);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetWindow(IntPtr windowHandle, uint command);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+        public static extern IntPtr GetWindowLongPtr(IntPtr windowHandle, int index);
 
         [DllImport("shell32.dll")]
         public static extern int SHGetPropertyStoreForWindow(

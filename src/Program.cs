@@ -15,7 +15,7 @@ namespace ClaudeMultiAccount
         [STAThread]
         private static int Main(string[] args)
         {
-            var config = AppConfig.FromEnvironment();
+            var config = AppConfig.FromArgumentsAndEnvironment(args);
 
             // Run before EnsureProfileDirectoriesExist: uninstalling should not
             // recreate the profile directory it might have just been asked to leave alone.

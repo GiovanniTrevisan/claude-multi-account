@@ -118,19 +118,39 @@ cookies, cache — é preservado de qualquer forma).
 
 ### Configuração
 
-Variáveis de ambiente, todas opcionais:
+A identidade (nome do perfil, AppUserModelID, nome exibido) pode ser definida
+de duas formas, com os argumentos de linha de comando tendo precedência sobre
+as variáveis de ambiente, que por sua vez têm precedência sobre os padrões:
 
-| Variável              | Padrão                     | Efeito                                     |
-|-----------------------|-----------------------------|---------------------------------------------|
-| `CLAUDE_WORK_PROFILE` | `Claude-Work`               | Nome do perfil (`%LOCALAPPDATA%\<nome>`)    |
-| `CLAUDE_WORK_AUMID`   | `ClaudeMultiAccount.Work`   | AppUserModelID gravado na janela            |
-| `CLAUDE_WORK_NAME`    | `Claude Work`                | Nome exibido (mensagens de erro, registro)  |
+| Argumento           | Variável de ambiente    | Padrão                      | Efeito                                     |
+|----------------------|---------------------------|------------------------------|---------------------------------------------|
+| `--profile=<nome>`  | `CLAUDE_WORK_PROFILE`   | `Claude-Work`               | Nome do perfil (`%LOCALAPPDATA%\<nome>`)    |
+| `--aumid=<id>`      | `CLAUDE_WORK_AUMID`     | `ClaudeMultiAccount.Work`   | AppUserModelID gravado na janela            |
+| `--name=<nome>`     | `CLAUDE_WORK_NAME`      | `Claude Work`                | Nome exibido (mensagens de erro, registro)  |
+
+A forma recomendada de configurar uma segunda (ou terceira) conta é usando os
+argumentos de linha de comando junto com `--install-shortcuts`, por exemplo:
+
+```powershell
+"Claude Work.exe" --profile="Claude-Work2" --aumid="ClaudeMultiAccount.Work2" --name="Claude Work 2" --install-shortcuts
+```
+
+Isso grava a identidade diretamente no atalho (nos argumentos do seu alvo) e
+no `RelaunchCommand` da janela, então clicar no atalho — ou em "Abrir" pela
+barra de tarefas/Menu Iniciar — sempre reabre exatamente aquele perfil,
+independentemente de quais variáveis de ambiente estejam definidas naquele
+momento. As variáveis de ambiente continuam funcionando e são úteis para
+execuções avulsas ou via script, mas sozinhas elas **não** persistem num
+atalho: um atalho criado só com `CLAUDE_WORK_PROFILE` definida reabriria
+silenciosamente o perfil padrão ao ser lançado pelo Explorer, já que variáveis
+de ambiente do momento não fazem parte do alvo de um `.lnk`. Passar os valores
+como argumentos para `--install-shortcuts` evita esse problema por completo.
 
 Rodando `Claude Work.exe --install-shortcuts` novamente recria os atalhos —
-útil após mudar essas variáveis.
+útil após mudar a identidade.
 
-Para uma terceira conta, basta rodar com outro par
-`CLAUDE_WORK_PROFILE`/`CLAUDE_WORK_AUMID`.
+Para uma terceira conta, basta rodar com outro par `--profile`/`--aumid` (ou
+as variáveis de ambiente equivalentes) e `--install-shortcuts`.
 
 ## Estrutura do projeto
 

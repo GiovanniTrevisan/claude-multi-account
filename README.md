@@ -117,19 +117,39 @@ untouched either way).
 
 ### Configuration
 
-Environment variables, all optional:
+Identity (profile name, AppUserModelID, display name) can be set two ways,
+with command-line arguments taking precedence over environment variables,
+which take precedence over the defaults:
 
-| Variable              | Default                    | Effect                                     |
-|------------------------|-----------------------------|---------------------------------------------|
-| `CLAUDE_WORK_PROFILE`  | `Claude-Work`              | Profile name (`%LOCALAPPDATA%\<name>`)      |
-| `CLAUDE_WORK_AUMID`    | `ClaudeMultiAccount.Work`  | AppUserModelID stamped on the window        |
-| `CLAUDE_WORK_NAME`     | `Claude Work`               | Display name (error messages, registration) |
+| Argument           | Environment variable   | Default                    | Effect                                     |
+|---------------------|--------------------------|-----------------------------|---------------------------------------------|
+| `--profile=<name>`  | `CLAUDE_WORK_PROFILE`   | `Claude-Work`              | Profile name (`%LOCALAPPDATA%\<name>`)      |
+| `--aumid=<id>`      | `CLAUDE_WORK_AUMID`     | `ClaudeMultiAccount.Work`  | AppUserModelID stamped on the window        |
+| `--name=<name>`     | `CLAUDE_WORK_NAME`      | `Claude Work`               | Display name (error messages, registration) |
+
+The recommended way to set up a second (or third) account is with the
+command-line arguments plus `--install-shortcuts`, for example:
+
+```powershell
+"Claude Work.exe" --profile="Claude-Work2" --aumid="ClaudeMultiAccount.Work2" --name="Claude Work 2" --install-shortcuts
+```
+
+This bakes the identity into the shortcut itself (its target arguments) and
+into the window's `RelaunchCommand`, so clicking the shortcut — or "Open" from
+the taskbar/Start Menu — always reopens exactly that profile, regardless of
+what environment variables happen to be set at the time. Environment variables
+still work and are useful for one-off or scripted launches, but by themselves
+they do **not** persist into a shortcut: a shortcut created with only
+`CLAUDE_WORK_PROFILE` set would silently reopen the default profile once
+launched from Explorer, since ambient environment variables aren't part of a
+`.lnk`'s target. Passing the values as arguments to `--install-shortcuts`
+avoids that problem entirely.
 
 Running `Claude Work.exe --install-shortcuts` again recreates the shortcuts —
-useful after changing these variables.
+useful after changing the identity.
 
-For a third account, just run with a different `CLAUDE_WORK_PROFILE` /
-`CLAUDE_WORK_AUMID` pair.
+For a third account, just run with a different `--profile` / `--aumid` pair
+(or the equivalent environment variables) and `--install-shortcuts`.
 
 ## Project layout
 

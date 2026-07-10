@@ -50,7 +50,7 @@ namespace ClaudeMultiAccount
                 try
                 {
                     propertyStore.SetString(PropertyKeys.AppUserModelId, _config.AppUserModelId);
-                    propertyStore.SetString(PropertyKeys.AppUserModelRelaunchCommand, "\"" + _config.ExecutablePath + "\"");
+                    propertyStore.SetString(PropertyKeys.AppUserModelRelaunchCommand, "\"" + _config.ExecutablePath + "\" " + _config.LaunchArguments);
                     propertyStore.SetString(PropertyKeys.AppUserModelRelaunchDisplayNameResource, _config.ProductName);
                     if (File.Exists(_config.IconPath))
                         propertyStore.SetString(PropertyKeys.AppUserModelRelaunchIconResource, _config.IconPath + ",0");
