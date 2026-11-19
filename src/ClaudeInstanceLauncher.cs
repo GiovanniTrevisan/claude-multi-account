@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 
 namespace ClaudeMultiAccount
 {
@@ -19,6 +20,15 @@ namespace ClaudeMultiAccount
             {
                 UseShellExecute = false
             };
+
+            if (!config.IsLocalDataShared)
+            {
+                // Only the child process sees the redirected folder; see
+                // AppConfig.PrivateLocalAppDataDirectory for why.
+                Directory.CreateDirectory(config.PrivateLocalAppDataDirectory);
+                startInfo.EnvironmentVariables["LOCALAPPDATA"] = config.PrivateLocalAppDataDirectory;
+            }
+
             Process.Start(startInfo);
         }
     }

@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace ClaudeMultiAccount.Interop
 {
@@ -36,9 +35,6 @@ namespace ClaudeMultiAccount.Interop
 
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr windowHandle, out uint processId);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern int GetWindowText(IntPtr windowHandle, StringBuilder text, int maxCount);
 
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(IntPtr windowHandle, int message, IntPtr wParam, IntPtr lParam);

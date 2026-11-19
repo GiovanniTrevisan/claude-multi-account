@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using ClaudeMultiAccount.Interop;
 
@@ -15,6 +16,7 @@ namespace ClaudeMultiAccount
         private readonly AppConfig _config;
         private readonly IntPtr _bigIcon;
         private readonly IntPtr _smallIcon;
+        private readonly HashSet<IntPtr> _windowsWithLoggedFailure = new HashSet<IntPtr>();
 
         public TaskbarIdentityStamper(AppConfig config)
         {
@@ -23,10 +25,15 @@ namespace ClaudeMultiAccount
             _smallIcon = LoadIcon(NativeMethods.GetSystemMetrics(NativeMethods.SM_CXSMICON), NativeMethods.GetSystemMetrics(NativeMethods.SM_CYSMICON));
         }
 
-        public void ApplyIdentity(IntPtr windowHandle)
+        /// <summary>
+        /// Returns true when the taskbar identity was applied; false means the
+        /// window did not accept it yet and the caller should retry later.
+        /// </summary>
+        public bool ApplyIdentity(IntPtr windowHandle)
         {
-            ApplyAppUserModelProperties(windowHandle);
+            var wasApplied = ApplyAppUserModelProperties(windowHandle);
             ApplyIcon(windowHandle);
+            return wasApplied;
         }
 
         /// <summary>
@@ -39,11 +46,11 @@ namespace ClaudeMultiAccount
             ApplyIcon(windowHandle);
         }
 
-        private void ApplyAppUserModelProperties(IntPtr windowHandle)
+        private bool ApplyAppUserModelProperties(IntPtr windowHandle)
         {
             var propertyStore = ShellPropertyStore.ForWindow(windowHandle);
             if (propertyStore == null)
-                return;
+                return false;
 
             using (propertyStore)
             {
@@ -55,11 +62,16 @@ namespace ClaudeMultiAccount
                     if (File.Exists(_config.IconPath))
                         propertyStore.SetString(PropertyKeys.AppUserModelRelaunchIconResource, _config.IconPath + ",0");
                     propertyStore.Commit();
+                    return true;
                 }
-                catch
+                catch (Exception exception)
                 {
-                    // Best-effort: a failure here just means the window keeps
-                    // grouping with the default Claude taskbar entry.
+                    // Not fatal: the window keeps grouping with the default Claude
+                    // taskbar entry until the next retry succeeds.
+                    // Retried every tick, so log once per window to keep the log readable.
+                    if (_windowsWithLoggedFailure.Add(windowHandle))
+                        DiagnosticLog.Write("Could not stamp taskbar identity: " + exception.Message);
+                    return false;
                 }
             }
         }

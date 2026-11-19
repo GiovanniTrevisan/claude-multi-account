@@ -13,7 +13,9 @@ namespace ClaudeMultiAccount
     {
         private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(45);
-        private const int ConsecutiveEmptyChecksBeforeExit = 3;
+        // Claude briefly has no main process while it relaunches itself (e.g.
+        // right after sign-in); this grace period keeps the watcher alive across it.
+        private const int ConsecutiveEmptyChecksBeforeExit = 5;
 
         private readonly AppConfig _config;
         private readonly TaskbarIdentityStamper _stamper;
@@ -33,11 +35,13 @@ namespace ClaudeMultiAccount
 
             while (true)
             {
-                var mainProcessIds = ClaudeProcessInspector.GetMainProcessIdsUsingProfile(_config.UserDataDirectory);
-                if (mainProcessIds.Count > 0)
+                // One WMI query per tick: it is the expensive part of this loop,
+                // which runs for as long as the isolated instance stays open.
+                var snapshot = ClaudeProcessInspector.CaptureProfileProcesses(_config.UserDataDirectory);
+                if (snapshot.MainProcessIds.Count > 0)
                     instanceHasAppeared = true;
 
-                if (instanceHasAppeared && mainProcessIds.Count == 0)
+                if (instanceHasAppeared && snapshot.MainProcessIds.Count == 0)
                 {
                     consecutiveEmptyChecks++;
                     if (consecutiveEmptyChecks >= ConsecutiveEmptyChecksBeforeExit)
@@ -53,25 +57,36 @@ namespace ClaudeMultiAccount
                 if (!instanceHasAppeared && DateTime.UtcNow > startupDeadline)
                     return;
 
-                StampOwnedWindows(stampedWindows);
+                StampOwnedWindows(snapshot.AllProcessIds, stampedWindows);
                 Thread.Sleep(PollInterval);
             }
         }
 
-        private void StampOwnedWindows(HashSet<IntPtr> stampedWindows)
+        private void StampOwnedWindows(HashSet<uint> ownedProcessIds, HashSet<IntPtr> stampedWindows)
         {
-            var ownedProcessIds = ClaudeProcessInspector.GetProcessIdsUsingProfile(_config.UserDataDirectory);
+            var currentlyVisibleWindows = new HashSet<IntPtr>();
 
             foreach (var window in ClaudeWindowFinder.FindVisibleWindows())
             {
                 if (!ownedProcessIds.Contains(window.ProcessId))
                     continue;
 
-                if (stampedWindows.Add(window.Handle))
-                    _stamper.ApplyIdentity(window.Handle);
-                else
+                currentlyVisibleWindows.Add(window.Handle);
+                if (stampedWindows.Contains(window.Handle))
+                {
                     _stamper.ReapplyIcon(window.Handle);
+                    continue;
+                }
+
+                // Only remember the window once stamping succeeded, so a window
+                // that was not ready yet gets retried on the next tick.
+                if (_stamper.ApplyIdentity(window.Handle))
+                    stampedWindows.Add(window.Handle);
             }
+
+            // Forget closed windows: Windows reuses handle values, and a stale
+            // entry could make a brand-new window skip its identity stamp.
+            stampedWindows.IntersectWith(currentlyVisibleWindows);
         }
     }
 }
