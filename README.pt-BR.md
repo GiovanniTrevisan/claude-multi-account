@@ -127,6 +127,15 @@ as variáveis de ambiente, que por sua vez têm precedência sobre os padrões:
 | `--profile=<nome>`  | `CLAUDE_WORK_PROFILE`   | `Claude-Work`               | Nome do perfil (`%LOCALAPPDATA%\<nome>`)    |
 | `--aumid=<id>`      | `CLAUDE_WORK_AUMID`     | `ClaudeMultiAccount.Work`   | AppUserModelID gravado na janela            |
 | `--name=<nome>`     | `CLAUDE_WORK_NAME`      | `Claude Work`                | Nome exibido (mensagens de erro, registro)  |
+| `--shared-local-data` | `CLAUDE_WORK_SHARED_LOCAL_DATA=1` | desligado        | Deixa o perfil ver o `%LOCALAPPDATA%` real (veja abaixo) |
+
+Por padrão, cada perfil recebe um `%LOCALAPPDATA%` próprio (`<perfil>\LocalAppData`).
+Motivo: o Claude guarda ali um gateway de terceiros salvo (`Claude-3p`) e, quando
+ele existe, ignora o `--user-data-dir` e joga todos os perfis na mesma janela.
+Use `--shared-local-data` só no perfil que deve usar esse gateway.
+Efeito colateral: ferramentas iniciadas pelo Claude nesse perfil (Claude Code,
+servidores MCP, npx/uvx, Python) também enxergam a pasta isolada, então caches e
+logins que elas guardam em `%LOCALAPPDATA%` são refeitos por perfil.
 
 A forma recomendada de configurar uma segunda (ou terceira) conta é usando os
 argumentos de linha de comando junto com `--install-shortcuts`, por exemplo:
@@ -175,6 +184,12 @@ installer/
 
 ## Limitações conhecidas
 
+- **Login com Google não funciona na instância isolada.** O Google abre no
+  navegador do sistema, e o retorno (`claude://...`) é entregue pelo Windows à
+  instância padrão do Claude, não à isolada, que fica presa na tela de login.
+  Use "Continuar com e-mail". Não clique no link do e-mail no mesmo PC (ele
+  também abre a instância padrão): abra o e-mail em outro aparelho, como o
+  celular, pegue o código e digite-o na janela da instância isolada.
 - Depende de `Get-AppxPackage`/PowerShell para localizar o Claude — se a
   Anthropic renomear o pacote MSIX, a detecção precisa ser ajustada.
 - O carimbo de ícone (`WM_SETICON`) é reaplicado a cada segundo enquanto a

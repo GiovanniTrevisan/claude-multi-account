@@ -42,9 +42,10 @@ namespace ClaudeMultiAccount
                 if (File.Exists(shortcutPath))
                     File.Delete(shortcutPath);
             }
-            catch
+            catch (Exception exception)
             {
                 // Best-effort cleanup; a leftover shortcut is harmless.
+                DiagnosticLog.Write("Could not delete shortcut " + shortcutPath + ": " + exception.Message);
             }
         }
 
@@ -56,9 +57,10 @@ namespace ClaudeMultiAccount
                     @"Software\Classes\AppUserModelId\" + config.AppUserModelId,
                     throwOnMissingSubKey: false);
             }
-            catch
+            catch (Exception exception)
             {
                 // Best-effort cleanup.
+                DiagnosticLog.Write("Could not remove AppUserModelID registration: " + exception.Message);
             }
         }
 
@@ -74,9 +76,10 @@ namespace ClaudeMultiAccount
                         key.SetValue("IconUri", config.IconPath, RegistryValueKind.String);
                 }
             }
-            catch
+            catch (Exception exception)
             {
                 // Not critical: only affects notifications shown before first launch.
+                DiagnosticLog.Write("Could not register AppUserModelID: " + exception.Message);
             }
         }
 

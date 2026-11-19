@@ -17,7 +17,14 @@ namespace ClaudeMultiAccount
         {
             var config = AppConfig.FromArgumentsAndEnvironment(args);
 
-            // Run before EnsureProfileDirectoriesExist: uninstalling should not
+            var validationError = config.GetValidationError();
+            if (validationError != null)
+            {
+                NativeMessageBox.Show(validationError, "Claude Work");
+                return 1;
+            }
+
+            // Run before TryCreateProfileDirectories: uninstalling should not
             // recreate the profile directory it might have just been asked to leave alone.
             if (Array.IndexOf(args, UninstallArgument) >= 0)
             {
@@ -25,7 +32,9 @@ namespace ClaudeMultiAccount
                 return 0;
             }
 
-            EnsureProfileDirectoriesExist(config);
+            if (!TryCreateProfileDirectories(config))
+                return 1;
+            DiagnosticLog.Initialize(config.LogFilePath);
 
             if (Array.IndexOf(args, InstallShortcutsArgument) >= 0)
             {
@@ -56,17 +65,25 @@ namespace ClaudeMultiAccount
             return 0;
         }
 
-        private static void EnsureProfileDirectoriesExist(AppConfig config)
+        /// <summary>
+        /// CreateDirectory is a no-op when the folder already exists (including
+        /// when another launch created it a moment ago), so any exception here is
+        /// a real problem, such as a permissions issue, that Claude would hit too.
+        /// </summary>
+        private static bool TryCreateProfileDirectories(AppConfig config)
         {
             try
             {
                 Directory.CreateDirectory(config.UserDataDirectory);
                 Directory.CreateDirectory(config.CacheDirectory);
+                return true;
             }
-            catch
+            catch (Exception exception)
             {
-                // Nothing actionable if this races with another launch or the
-                // directories already exist.
+                NativeMessageBox.Show(
+                    "Could not create the profile folder:\n" + config.UserDataDirectory + "\n\n" + exception.Message,
+                    config.ProductName);
+                return false;
             }
         }
 

@@ -126,6 +126,15 @@ which take precedence over the defaults:
 | `--profile=<name>`  | `CLAUDE_WORK_PROFILE`   | `Claude-Work`              | Profile name (`%LOCALAPPDATA%\<name>`)      |
 | `--aumid=<id>`      | `CLAUDE_WORK_AUMID`     | `ClaudeMultiAccount.Work`  | AppUserModelID stamped on the window        |
 | `--name=<name>`     | `CLAUDE_WORK_NAME`      | `Claude Work`               | Display name (error messages, registration) |
+| `--shared-local-data` | `CLAUDE_WORK_SHARED_LOCAL_DATA=1` | off               | Lets the profile see the real `%LOCALAPPDATA%` (see below) |
+
+By default each profile gets its own `%LOCALAPPDATA%` (`<profile>\LocalAppData`).
+Reason: Claude stores a saved third-party gateway there (`Claude-3p`) and, when
+one exists, ignores `--user-data-dir` and forces every profile into one shared
+window. Pass `--shared-local-data` only to the profile that should use that gateway.
+Side effect: tools Claude starts in that profile (Claude Code, MCP servers,
+npx/uvx, Python) see the isolated folder too, so caches and sign-ins they keep
+in `%LOCALAPPDATA%` are rebuilt per profile.
 
 The recommended way to set up a second (or third) account is with the
 command-line arguments plus `--install-shortcuts`, for example:
@@ -174,6 +183,13 @@ installer/
 
 ## Known limitations
 
+- **"Continue with Google" does not work in the isolated instance.** Google
+  sign-in opens in the system browser, and its `claude://...` callback is
+  routed by Windows to the default Claude instance, not the isolated one, which
+  stays stuck on the sign-in screen. Use "Continue with email" instead, but do
+  not click the email's link on the same PC (it opens the default instance
+  too): open the email on another device, such as your phone, and type the
+  code into the isolated instance's window.
 - Depends on `Get-AppxPackage`/PowerShell to locate Claude — if Anthropic renames
   the MSIX package, detection needs updating.
 - The icon stamp (`WM_SETICON`) is reapplied every second while the instance
